@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剪刀石頭布遊戲</title>
+    <style>
+        body {
+            font-family: 'Creepster', cursive, sans-serif; /* 恐怖風字體 */
+            text-align: center;
+            margin-top: 50px;
+            background-color: #000000; /* 黑色背景 */
+            color: #f8f8f8; /* 白色文字 */
+        }
+        h1 {
+            color: #ff0000; /* 血紅色標題 */
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 8px #8B0000; /* 鮮紅色陰影效果 */
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .button-container img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%; /* 圓形圖片 */
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s; /* 動畫效果 */
+        }
+        .button-container img:hover {
+            transform: scale(1.2); /* 滑鼠移上時圖片變大 */
+            box-shadow: 0 6px 12px rgba(255, 0, 0, 0.8); /* 增強陰影效果 */
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #8B0000; /* 陰森效果 */
+        }
+        .win {
+            color: #FFD700; /* 勝利時顯示金色 */
+        }
+        .lose {
+            color: #FF6347; /* 失敗時顯示番茄紅 */
+        }
+        .tie {
+            color: #FFFFE0; /* 平手時顯示淡黃色 */
+        }
+        .container {
+            background-color: #111; /* 深黑色背景 */
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7); /* 黑色陰影 */
+            display: inline-block;
+        }
+        .reset-button {
+            margin-top: 20px;
+            font-size: 20px;
+            padding: 10px 20px;
+            background-color: #FF6347;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .reset-button:hover {
+            background-color: #FF4500;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap'); /* 恐怖字體 */
+    </style>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>剪刀石頭布</h1>
+        <div class="button-container">
+            <img id="scissors" src="scissors.png" alt="剪刀">
+            <img id="rock" src="rock.png" alt="石頭">
+            <img id="paper" src="paper.png" alt="布">
+        </div>
+        <div id="result"></div>
+        <button class="reset-button" onclick="resetGame()">重新開始</button>
+    </div>
+
+    <script>
+        const choices = ["剪刀", "石頭", "布"];
+        let playerWins = 0;  // 玩家勝利次數
+        let computerWins = 0;  // 電腦勝利次數
+        const maxWins = 3;  // 勝利次數限制
+
+        // 音樂文件
+        const winSound = new Audio('win.mp3');
+        const loseSound = new Audio('lose.mp3');
+        const tieSound = new Audio('tie.mp3');
+        const victorySound = new Audio('victory.mp3'); // 通關音樂
+        const computerVictorySound = new Audio('computerVictory.mp3'); // 電腦勝利音樂
+
+        // 生成隨機選擇
+        function computerChoice() {
+            const randomIndex = Math.floor(Math.random() * 3);
+            return choices[randomIndex];
+        }
+
+        // 判斷勝負
+        function determineWinner(player, computer) {
+            if (player === computer) {
+                return { result: "平手！", className: "tie", icon: "info" };
+            }
+            if (
+                (player === "剪刀" && computer === "布") ||
+                (player === "石頭" && computer === "剪刀") ||
+                (player === "布" && computer === "石頭")
+            ) {
+                playerWins++;
+                return { result: "你贏了！", className: "win", icon: "success" };
+            } else {
+                computerWins++;
+                return { result: "你輸了！", className: "lose", icon: "error" };
+            }
+        }
+
+        // 顯示遊戲結果
+        function showResult(playerChoice, computerChoice, result) {
+            let textColor;
+
+            // 停止所有音樂
+            winSound.pause();
+            loseSound.pause();
+            tieSound.pause();
+            victorySound.pause();
+            computerVictorySound.pause();
+
+            // 將進度重置到開頭
+            winSound.currentTime = 0;
+            loseSound.currentTime = 0;
+            tieSound.currentTime = 0;
+            victorySound.currentTime = 0;
+            computerVictorySound.currentTime = 0;
+
+            // 根據結果設置字體顏色和播放音樂
+            if (result.className === "win") {
+                textColor = '#FFD700';  // 金色 (勝利)
+                winSound.play();        // 播放勝利音樂
+            } else if (result.className === "lose") {
+                textColor = '#000000';  // 黑色 (失敗)
+                loseSound.play();       // 播放失敗音樂
+            } else {
+                textColor = '#FFFFE0';  // 淡黃色 (平手)
+                tieSound.play();        // 播放平手音樂
+            }
+
+            Swal.fire({
+                title: result.result,
+                html: `你選擇了：${playerChoice}<br>電腦選擇了：${computerChoice}<br><br>玩家勝利次數：${playerWins}<br>電腦勝利次數：${computerWins}`,
+                icon: result.icon,
+                confirmButtonText: '繼續',
+                background: '#8B0000',  // 深紅色背景
+                color: textColor,       // 動態設置字體顏色
+                confirmButtonColor: '#ff6347',
+            }).then(() => {
+                checkForWinner();
+            });
+        }
+
+        // 檢查是否有一方達到三次勝利
+        function checkForWinner() {
+            if (playerWins === maxWins) {
+                victorySound.play(); // 播放通關音樂
+                Swal.fire({
+                    title: '恭喜！你獲勝了！',
+                    text: '你先達到三次勝利！',
+                    icon: 'success',
+                    confirmButtonText: '重新開始',
+                    background: '#8B0000',
+                    color: '#f8f8f8',
+                    confirmButtonColor: '#FFD700',
+                }).then(() => {
+                    resetGame();
+                });
+            } else if (computerWins === maxWins) {
+                computerVictorySound.play(); // 播放電腦勝利音樂
+                Swal.fire({
+                    title: '很遺憾，電腦贏了。',
+                    text: '電腦先達到三次勝利。',
+                    icon: 'error',
+                    confirmButtonText: '重新開始',
+                    background: '#8B0000',
+                    color: '#f8f8f8',
+                    confirmButtonColor: '#FF6347',
+                }).then(() => {
+                    resetGame();
+                });
+            }
+        }
+
+        // 重置遊戲
+        function resetGame() {
+            playerWins = 0;
+            computerWins = 0;
+            document.getElementById("result").innerHTML = "";
+        }
+
+        // 處理圖片點擊事件
+        function playGame(playerChoice) {
+            const computer = computerChoice();
+            const outcome = determineWinner(playerChoice, computer);
+            
+            showResult(playerChoice, computer, outcome);
+        }
+
+        document.getElementById("scissors").onclick = function() {
+            playGame("剪刀");
+        };
+        document.getElementById("rock").onclick = function() {
+            playGame("石頭");
+        };
+        document.getElementById("paper").onclick = function() {
+            playGame("布");
+        };
+    </script>
+</body>
+</html>
